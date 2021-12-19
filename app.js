@@ -1,50 +1,41 @@
-const {chromium} = require('playwright');
+const {firefox} = require('playwright');
 
 const url = 'https://www.skyscanner.net/';
 
 (async () => {
 
-    const browser = await chromium.launch({headless: false});
+    const browser = await firefox.launch({headless: true});
     const context = await browser.newContext();
     const page = await context.newPage();
-
-    // Start tracing before creating / navigating a page.
-    await context.tracing.start({ screenshots: true, snapshots: true });
 
     await page.goto(url);
 
     await clickInputs(page);
 
-    await browser.startTracing(page, {path: 'trace.json'});
-
     await page.locator('.BpkButtonBase_bpk-button__NTM4Y').click();
 
     await page.waitForNavigation();
 
-    await browser.stopTracing();
+    const json = await getNetworkEvents(page);
 
-    let data = await page.evaluate(() => {
+    const itineraries = await itinerariesFunc(json);
 
-        let text = document.querySelector('body').innerText;
+    const tickers = await tickersFunc(itineraries);
 
-        return text;
+    console.log(tickers);
 
-    });
+    await browser.close();
 
-    // await browser.close();
-
-    console.log(data);
-
-    // Stop tracing and export it into a zip archive.
-
-
-
+    // npx playwright show-trace trace.zip
 
 })();
 
+let inputData = {
+    origin: 'Baku',
+    destination: 'Istanbul',
+}
 
-let clickInputs = async (page) => {
-
+async function clickInputs(page) {
     await page.click('#fsc-origin-search');
     await page.fill('#fsc-origin-search', inputData.origin)
 
@@ -52,9 +43,26 @@ let clickInputs = async (page) => {
     await page.fill('#fsc-destination-search', inputData.destination)
 }
 
-let inputData = {
+async function getNetworkEvents(page) {
+    const [response] = await Promise.all([
+        page.waitForResponse('**/g/conductor/v1/**'),
+    ]);
+    // console.log(typeof response);
+    return response.json();
+}
 
-    origin: 'Baku',
-    destination: 'Istanbul',
+async function itinerariesFunc(jsonData) {
+    return jsonData['itineraries'];
+}
 
+async function tickersFunc(data) {
+    let tickers = {}
+
+    Object.keys(data).forEach(key => {
+        tickers[key] = {
+            id: data[key]['id'],
+            priceOptions: data[key]['pricing_options']
+        }
+    });
+    return tickers
 }

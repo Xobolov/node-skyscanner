@@ -33,9 +33,6 @@ const url = 'https://www.skyscanner.net/news';
         return text;
     });
 
-
     await browser.close();
-
-    console.log(data)
 
 })();
