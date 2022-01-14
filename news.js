@@ -1,4 +1,5 @@
 const {chromium} = require('playwright');
+const querystring = require('querystring');
 
 const url = 'https://www.skyscanner.net/news';
 

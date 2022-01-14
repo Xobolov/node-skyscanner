@@ -1,4 +1,5 @@
 const {firefox} = require('playwright');
+const querystring = require("querystring");
 
 const url = 'https://www.skyscanner.net/';
 
@@ -18,11 +19,32 @@ const url = 'https://www.skyscanner.net/';
 
     const json = await getNetworkEvents(page);
 
-    const itineraries = await itinerariesFunc(json);
+    const jsonData = await loadData(json);
 
-    const tickers = await tickersFunc(itineraries);
 
-    console.log(tickers);
+    for await (let itineraries of jsonData){
+
+        let id = itineraries.id;
+         for await (let option of itineraries.pricing_options){
+
+            let price = option.price.amount;
+            for await (let item of option.items){
+
+
+                console.log(querystring.parse(item.url.))
+            }
+        }
+
+
+
+
+    }
+
+
+
+
+    // const item = await items(tickers);
+
 
     await browser.close();
 
@@ -36,6 +58,7 @@ let inputData = {
 }
 
 async function clickInputs(page) {
+    await page.click('#fsc-trip-type-selector-one-way');
     await page.click('#fsc-origin-search');
     await page.fill('#fsc-origin-search', inputData.origin)
 
@@ -51,14 +74,14 @@ async function getNetworkEvents(page) {
     return response.json();
 }
 
-async function itinerariesFunc(jsonData) {
+async function loadData(jsonData) {
     return jsonData['itineraries'];
 }
 
 async function tickersFunc(data) {
     let tickers = {}
 
-    Object.keys(data).forEach(key => {
+    await Object.keys(data).forEach(key => {
         tickers[key] = {
             id: data[key]['id'],
             priceOptions: data[key]['pricing_options']
@@ -66,3 +89,7 @@ async function tickersFunc(data) {
     });
     return tickers
 }
+
+
+
+
