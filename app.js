@@ -19,28 +19,82 @@ const url = 'https://www.skyscanner.net/';
 
     const json = await getNetworkEvents(page);
 
-    const jsonData = await loadData(json);
+    const itinerariesData = await loadData(json, 'itineraries');
+    const segmentData = await loadData(json, 'segments');
 
 
-    for await (let itineraries of jsonData){
+    let array = [];
+    for await (let key of Object.keys(itinerariesData)) {
 
-        let id = itineraries.id;
-         for await (let option of itineraries.pricing_options){
+        // let id = itineraries.id;
 
-            let price = option.price.amount;
-            for await (let item of option.items){
+        let pricingOptions = itinerariesData[key].pricing_options;
+        let option = []
+        for await (let key of Object.keys(pricingOptions)) {
+
+            // let mainAgentId = option.agent_ids;
+            // let mainPrice = option.price.amount;
+
+            option = {
+                mainAgentId: pricingOptions[key].agent_ids,
+                mainPrice: pricingOptions[key]['price']['amount'],
+            }
 
 
-                console.log(querystring.parse(item.url.))
+           let items = pricingOptions[key]['items'];
+
+
+            // console.log(items);
+
+            let itemsArr = [];
+            for await (let key of Object.keys(items)) {
+
+                // let subAgentId = item.agent_id;
+                // let subPrice = item.price.amount;
+
+                itemsArr = {
+                    subAgentId: items[key]['agent_id'],
+                    subPrice: items[key]['price']['amount'],
+                }
+
+                // console.log();
+
+                // let segmentIds = item.segment_ids
+                // for await (let id of segmentIds) {
+                //
+                //     for await (let segment of segmentData) {
+                //
+                //         if (id == segment.id) {
+                //
+                //
+                //             let arrival = segment.arrival;
+                //             let departure = segment.departure;
+                //
+                //
+                //         }
+                //
+                //
+                //     }
+                //
+                // }
+
+
+            }
+
+            option[key] = {
+                itemsArr
             }
         }
 
 
+        array[key] = {
+            id: itinerariesData[key].id,
+            option
+        }
+        console.log(array)
 
 
     }
-
-
 
 
     // const item = await items(tickers);
@@ -74,8 +128,8 @@ async function getNetworkEvents(page) {
     return response.json();
 }
 
-async function loadData(jsonData) {
-    return jsonData['itineraries'];
+async function loadData(json, property) {
+    return json[property];
 }
 
 async function tickersFunc(data) {
